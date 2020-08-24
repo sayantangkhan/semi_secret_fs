@@ -3,8 +3,15 @@
 This is a FUSE-based cryptographic filesystem, inpsired by [[https://github.com/vgough/encfs][EncFS]] and [[https://github.com/cryfs/cryfs][CryFS]]. This encrypts a directory
 transparently such that it can be synced with a cloud storage provider without leaking the contents of the
 files stored. However, some metadata will be leaked, for performance reasons, hence the name.
+** Things to do
+*** Short term
+- [ ] Add appropriate cargo warnings
+- [ ] Sketch out structure of filesystem in a document
 ** Feature wishlist
-- [ ] One-to-one mapping between plaintext files and ciphertext files
+- [ ] One-to-one mapping between plaintext files and ciphertext files (except for some exceptions, like ~.git~
+  directories)
 - [ ] Encrypt eagerly only on write
+- [ ] Notify sync daemon on write
+- [ ] Decrypt eagerly on cloud update
 - [ ] Cache (and not encrypt) ignored files, like build directories
 - [ ] Checksums?
