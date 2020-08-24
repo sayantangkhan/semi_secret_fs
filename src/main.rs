@@ -1,3 +1,5 @@
+use semi_secret_fs::*;
+
 fn main() {
-    println!("Hello, world!");
+    mount_test_filesystem();
 }
