@@ -1,0 +1,35 @@
+* Background
+** Overview of FUSE
+A FUSE setup lets one redirect file-operations related syscalls to arbitrary code. This is done using the FUSE
+kernel module and the associated userspace library. The kernel driver intercepts syscalls like ~open~,
+~creat~, etc. and redirects them to the userspace library. The userspace library author implements code
+corresponding to each redirected syscall, and this is the code that runs instead. The userspace library does
+all the hard work of running the filesystem, like maintaining the inode table, the file descriptor table,
+maintaining the buffer cache, etc.
+** Filesystem basics
+*** Inode table
+Each file (including directories and symlinks) in the filesystem, has an associated ~u64~, called the inode
+(short for index node) which acts as the unique reference to the file. An inode table is the collection of
+all the inodes in the filesystem, and along with the inodes, contains all the other metadata associated to
+files: the most important of which is their position as a vertex in the filesystem tree. Other metadata
+includes permission, (a/m)times, and size(?).
+*** File descriptor (or handle)
+A syscall may request to open an inode, in which case it's returned a file descriptor. The file descriptor is
+generated on the fly by the kernel/filesystem code, and is associated to the file for as long as the file is
+open. The file descriptor is used for read/write operations (possibly to have some sort of control over
+mutiple processes accessing the same file). The file descriptor is analogous to a reference count in Rust,
+i.e. multiple processes can ~open~ an inode, and receive the same file descriptor, and the reference count
+in the FD table increases by one on every such event, and decreases on every ~close~. When it drops to 0,
+it can be dropped on the backend.
+** List of syscalls to implement [0/0]
+* Questions
+** What is the right way to implement concurrency?
+* Useful links
+** Writing a simple filesystem in FUSE using C
+[[https://www.maastaar.net/fuse/linux/filesystem/c/2016/05/21/writing-a-simple-filesystem-using-fuse/][Link]] to post
+** Simple fuse-rs example
+[[https://github.com/zargony/fuse-rs/blob/master/examples/hello.rs][Link]] to code
+** FUSE man page
+[[https://man7.org/linux/man-pages/man4/fuse.4.html][Link]] to man page
+** Implementing a FUSE fs in Go
+[[https://blog.gopheracademy.com/advent-2014/fuse-zipfs/][Link]] to post
