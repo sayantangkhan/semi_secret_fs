@@ -6,25 +6,41 @@ kernel module and the associated userspace library. The kernel driver intercepts
 corresponding to each redirected syscall, and this is the code that runs instead. The userspace library does
 all the hard work of running the filesystem, like maintaining the inode table, the file descriptor table,
 maintaining the buffer cache, etc.
+** Temporary workarounds
+*** Working around inotify issues
+Since fuse-rs hasn't implemented the inotify calls, there is a chance that the cache the kernel maintains
+could be outdated. There are two possible workarounds.
+- As soon as some file is updated remotely, tell the kernel to clear the cache corresponding to that file.
+  However, there doesn't seem to be any way of telling whether a given file is cached by the kernel or not,
+  which means there will be a lot of unnecessary cache clear requests. On the other hand, this will be easier
+  implement, because the kernel is doing all the caching.
+- The other option is to disable kernel caching via the ~direct_io~ option, and maintain a cache within the
+  application. This lets us control the cache better, but the drawback is that we will have to implement the
+  caching, and our implementation will probably be worse and less efficient than the kernel's implementation.
 ** Filesystem basics
 *** Inode table
 Each file (including directories and symlinks) in the filesystem, has an associated ~u64~, called the inode
-(short for index node) which acts as the unique reference to the file. An inode table is the collection of
-all the inodes in the filesystem, and along with the inodes, contains all the other metadata associated to
-files: the most important of which is their position as a vertex in the filesystem tree. Other metadata
-includes permission, (a/m)times, and size(?).
+(short for index node) which acts as the unique reference to the file. An inode table is the collection of all
+the inodes in the filesystem, and along with the inodes, contains all the other metadata associated to files:
+the most important of which is their position as a vertex in the filesystem tree. Other metadata includes
+permission, (a/m)times, and size(?).
 *** File descriptor (or handle)
 A syscall may request to open an inode, in which case it's returned a file descriptor. The file descriptor is
 generated on the fly by the kernel/filesystem code, and is associated to the file for as long as the file is
 open. The file descriptor is used for read/write operations (possibly to have some sort of control over
 mutiple processes accessing the same file). The file descriptor is analogous to a reference count in Rust,
-i.e. multiple processes can ~open~ an inode, and receive the same file descriptor, and the reference count
-in the FD table increases by one on every such event, and decreases on every ~close~. When it drops to 0,
-it can be dropped on the backend.
+i.e. multiple processes can ~open~ an inode, and receive the same file descriptor, and the reference count in
+the FD table increases by one on every such event, and decreases on every ~close~. When it drops to 0, it can
+be dropped on the backend.
 ** List of syscalls to implement [0/0]
 * Questions
 ** What is the right way to implement concurrency?
+** Do I need to implement caching, or does FUSE do that?
+** How to notify the kernel of changes to cached files?
+The original FUSE C library has a family of (at least) 3 functions, all starting with ~notify~, that do this,
+but the Rust library hasn't translated them yet (see this [[https://github.com/zargony/fuse-rs/issues/88][issue]] for details).
 * Useful links
+- [[https://docs.racket-lang.org/fuse/index.html][Racket documentation for fuse]]
 - [[https://www.maastaar.net/fuse/linux/filesystem/c/2016/05/21/writing-a-simple-filesystem-using-fuse/][Writing a simple filesystem in FUSE using C]]
 - [[https://blog.gopheracademy.com/advent-2014/fuse-zipfs/][Implementing a FUSE filesystem in Go]]
 - [[https://github.com/zargony/fuse-rs/blob/master/examples/hello.rs][Simple fuse-rs example]]
