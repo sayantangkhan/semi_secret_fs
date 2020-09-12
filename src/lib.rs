@@ -1,7 +1,7 @@
-mod inode_table;
+mod fs_data_structures;
 
+use fs_data_structures::*;
 use fuse::{mount, Filesystem, ReplyAttr, ReplyEntry, Request};
-use inode_table::*;
 use libc;
 use libc::ENOENT;
 use std::env;
